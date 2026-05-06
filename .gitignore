@@ -6,3 +6,5 @@ npm-debug.log*
 .env.local
 .env.*.local
 dist/
+public/assets/
+public/index.html
