@@ -20,16 +20,13 @@ export default function App() {
   const syncPortfolio = usePortfolioStore((s) => s.syncFromApi)
   const syncWatchlist = useWatchlistStore((s) => s.syncFromApi)
 
-  // Aplica tema
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
   }, [theme])
 
-  // Verifica autenticação e sincroniza dados
   useEffect(() => {
     check().then(() => {
-      const isAuth = useAuthStore.getState().status === 'authenticated'
-      if (isAuth) {
+      if (useAuthStore.getState().status === 'authenticated') {
         syncPortfolio()
         syncWatchlist()
       }
@@ -39,22 +36,18 @@ export default function App() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-3">
           <div className="w-12 h-12 bg-brand-600 rounded-xl flex items-center justify-center animate-pulse">
             <TrendingUp className="h-6 w-6 text-white" />
           </div>
-          <p className="text-slate-400 text-sm">Verificando autenticação...</p>
+          <p className="text-slate-400 text-sm">Carregando...</p>
         </div>
       </div>
     )
   }
 
   if (status === 'unauthenticated') {
-    return (
-      <div className={theme}>
-        <Login />
-      </div>
-    )
+    return <div className={theme === 'dark' ? 'dark' : ''}><Login /></div>
   }
 
   return (
