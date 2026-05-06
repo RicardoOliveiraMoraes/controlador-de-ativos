@@ -2,5 +2,17 @@
   "project": {
     "project-name": "newppp",
     "project-id": "7003000000344007"
+  },
+  "functions": {
+    "tasks": [
+      {
+        "type": "advanced_io",
+        "name": "bovespa-api",
+        "stack": "nodejs18",
+        "memory": 256,
+        "timeout": 60,
+        "slug": "bovespa-api"
+      }
+    ]
   }
 }
