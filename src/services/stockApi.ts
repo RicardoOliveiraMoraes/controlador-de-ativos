@@ -74,8 +74,14 @@ export async function fetchQuotes(tickers: string[], apiKey?: string): Promise<Q
     }
   }
 
-  const results = await Promise.all(tickers.map(fetchOne))
-  return results.filter((q): q is Quote => q !== null)
+  const results: Quote[] = []
+  for (const ticker of tickers) {
+    const quote = await fetchOne(ticker)
+    if (quote) results.push(quote)
+    // pausa entre requisições para respeitar o rate limit do plano gratuito
+    await new Promise((resolve) => setTimeout(resolve, 300))
+  }
+  return results
 }
 
 export async function searchStocks(query: string, apiKey?: string): Promise<Stock[]> {
