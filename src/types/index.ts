@@ -8,6 +8,7 @@ export type TransactionType = 'BUY' | 'SELL'
 
 export interface Transaction {
   id: string
+  rowId?: string   // Catalyst Data Store ROWID (disponível quando autenticado)
   ticker: string
   type: TransactionType
   quantity: number
@@ -43,6 +44,13 @@ export interface WatchlistItem {
   ticker: string
   addedAt: string
   note?: string
+  rowId?: string   // Catalyst Data Store ROWID (disponível quando autenticado)
+}
+
+export interface AuthUser {
+  id: string
+  email: string
+  name: string
 }
 
 export interface PortfolioSummary {

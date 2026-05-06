@@ -15,6 +15,8 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Catalyst Web SDK: disponível apenas quando deployado no Catalyst -->
+    <script src="/__catalyst/init.js" onerror="console.info('Catalyst SDK não disponível (dev local)')"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

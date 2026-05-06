@@ -1,0 +1,13 @@
+{
+  "name": "bovespa-api",
+  "version": "1.0.0",
+  "description": "Catalyst Function – API REST para o Gerenciador de Ativos Bovespa",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "zcatalyst-sdk-node": "^1.0.2"
+  }
+}
