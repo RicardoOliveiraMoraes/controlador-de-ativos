@@ -23,29 +23,28 @@ const MOCK_QUOTES: Record<string, Quote> = {
 
 export const POPULAR_STOCKS = Object.keys(MOCK_QUOTES)
 
-export async function fetchQuotes(tickers: string[], apiKey?: string): Promise<Quote[]> {
-  if (!tickers.length) return []
+const CACHE_TTL_MS = 30_000
+const REQUEST_DELAY_MS = 400
+const MAX_RETRIES = 3
 
-  if (!apiKey) {
-    return tickers.map((t) => {
-      const mock = MOCK_QUOTES[t.toUpperCase()]
-      if (mock) return { ...mock, updatedAt: new Date().toISOString() }
-      return {
-        ticker: t.toUpperCase(),
-        name: t.toUpperCase(),
-        price: 0,
-        change: 0,
-        changePercent: 0,
-        open: 0,
-        high: 0,
-        low: 0,
-        volume: 0,
-        updatedAt: new Date().toISOString(),
-      }
-    })
+const quoteCache = new Map<string, { quote: Quote; expiresAt: number }>()
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+function mockQuote(ticker: string): Quote {
+  const mock = MOCK_QUOTES[ticker.toUpperCase()]
+  if (mock) return { ...mock, updatedAt: new Date().toISOString() }
+  return {
+    ticker: ticker.toUpperCase(),
+    name: ticker.toUpperCase(),
+    price: 0, change: 0, changePercent: 0,
+    open: 0, high: 0, low: 0, volume: 0,
+    updatedAt: new Date().toISOString(),
   }
+}
 
-  const mapResult = (r: Record<string, unknown>): Quote => ({
+function mapResult(r: Record<string, unknown>): Quote {
+  return {
     ticker: String(r.symbol ?? ''),
     name: String(r.longName ?? r.shortName ?? r.symbol ?? ''),
     price: Number(r.regularMarketPrice ?? 0),
@@ -58,9 +57,11 @@ export async function fetchQuotes(tickers: string[], apiKey?: string): Promise<Q
     marketCap: r.marketCap ? Number(r.marketCap) : undefined,
     sector: String(r.sector ?? ''),
     updatedAt: new Date().toISOString(),
-  })
+  }
+}
 
-  const fetchOne = async (ticker: string): Promise<Quote | null> => {
+async function fetchOneWithRetry(ticker: string, apiKey: string): Promise<Quote | null> {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       const { data } = await axios.get(`${BASE_URL}/quote/${ticker}`, {
         params: { token: apiKey, fundamental: false },
@@ -68,19 +69,52 @@ export async function fetchQuotes(tickers: string[], apiKey?: string): Promise<Q
       })
       const result = data.results?.[0]
       return result ? mapResult(result) : null
-    } catch {
-      const mock = MOCK_QUOTES[ticker.toUpperCase()]
-      return mock ? { ...mock, updatedAt: new Date().toISOString() } : null
+    } catch (err) {
+      const status = axios.isAxiosError(err) ? err.response?.status : undefined
+      const isRateLimit = status === 429 || status === 503
+      if (isRateLimit && attempt < MAX_RETRIES) {
+        // backoff exponencial: 1s, 2s, 4s
+        await sleep(1000 * 2 ** attempt)
+        continue
+      }
+      return null
+    }
+  }
+  return null
+}
+
+export async function fetchQuotes(tickers: string[], apiKey?: string): Promise<Quote[]> {
+  if (!tickers.length) return []
+
+  if (!apiKey) {
+    return tickers.map(mockQuote)
+  }
+
+  const now = Date.now()
+  const results: Quote[] = []
+  const toFetch: string[] = []
+
+  for (const ticker of tickers) {
+    const cached = quoteCache.get(ticker.toUpperCase())
+    if (cached && cached.expiresAt > now) {
+      results.push(cached.quote)
+    } else {
+      toFetch.push(ticker)
     }
   }
 
-  const results: Quote[] = []
-  for (const ticker of tickers) {
-    const quote = await fetchOne(ticker)
-    if (quote) results.push(quote)
-    // pausa entre requisições para respeitar o rate limit do plano gratuito
-    await new Promise((resolve) => setTimeout(resolve, 300))
+  // requisições sequenciais com delay para respeitar o rate limit
+  for (let i = 0; i < toFetch.length; i++) {
+    const ticker = toFetch[i]
+    const quote = (await fetchOneWithRetry(ticker, apiKey)) ?? mockQuote(ticker)
+    quoteCache.set(ticker.toUpperCase(), {
+      quote,
+      expiresAt: Date.now() + CACHE_TTL_MS,
+    })
+    results.push(quote)
+    if (i < toFetch.length - 1) await sleep(REQUEST_DELAY_MS)
   }
+
   return results
 }
 
