@@ -45,30 +45,37 @@ export async function fetchQuotes(tickers: string[], apiKey?: string): Promise<Q
     })
   }
 
-  try {
-    const tickersStr = tickers.join(',')
-    const { data } = await axios.get(`${BASE_URL}/quote/${tickersStr}`, {
-      params: { token: apiKey, fundamental: false },
-      timeout: 10_000,
-    })
+  const mapResult = (r: Record<string, unknown>): Quote => ({
+    ticker: String(r.symbol ?? ''),
+    name: String(r.longName ?? r.shortName ?? r.symbol ?? ''),
+    price: Number(r.regularMarketPrice ?? 0),
+    change: Number(r.regularMarketChange ?? 0),
+    changePercent: Number(r.regularMarketChangePercent ?? 0),
+    open: Number(r.regularMarketOpen ?? 0),
+    high: Number(r.regularMarketDayHigh ?? 0),
+    low: Number(r.regularMarketDayLow ?? 0),
+    volume: Number(r.regularMarketVolume ?? 0),
+    marketCap: r.marketCap ? Number(r.marketCap) : undefined,
+    sector: String(r.sector ?? ''),
+    updatedAt: new Date().toISOString(),
+  })
 
-    return (data.results ?? []).map((r: Record<string, unknown>) => ({
-      ticker: String(r.symbol ?? ''),
-      name: String(r.longName ?? r.shortName ?? r.symbol ?? ''),
-      price: Number(r.regularMarketPrice ?? 0),
-      change: Number(r.regularMarketChange ?? 0),
-      changePercent: Number(r.regularMarketChangePercent ?? 0),
-      open: Number(r.regularMarketOpen ?? 0),
-      high: Number(r.regularMarketDayHigh ?? 0),
-      low: Number(r.regularMarketDayLow ?? 0),
-      volume: Number(r.regularMarketVolume ?? 0),
-      marketCap: r.marketCap ? Number(r.marketCap) : undefined,
-      sector: String(r.sector ?? ''),
-      updatedAt: new Date().toISOString(),
-    }))
-  } catch {
-    return fetchQuotes(tickers)
+  const fetchOne = async (ticker: string): Promise<Quote | null> => {
+    try {
+      const { data } = await axios.get(`${BASE_URL}/quote/${ticker}`, {
+        params: { token: apiKey, fundamental: false },
+        timeout: 10_000,
+      })
+      const result = data.results?.[0]
+      return result ? mapResult(result) : null
+    } catch {
+      const mock = MOCK_QUOTES[ticker.toUpperCase()]
+      return mock ? { ...mock, updatedAt: new Date().toISOString() } : null
+    }
   }
+
+  const results = await Promise.all(tickers.map(fetchOne))
+  return results.filter((q): q is Quote => q !== null)
 }
 
 export async function searchStocks(query: string, apiKey?: string): Promise<Stock[]> {
