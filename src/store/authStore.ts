@@ -33,6 +33,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   error: null,
 
   check: async () => {
+    // Wait up to 4s for /__catalyst/init.js to load and initialize
+    for (let i = 0; i < 40; i++) {
+      if (isCatalystReady()) break
+      await new Promise((r) => setTimeout(r, 100))
+    }
+
     if (!isCatalystReady()) {
       set({ status: 'unauthenticated' })
       return
