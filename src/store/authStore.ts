@@ -20,20 +20,24 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   check: async () => {
     try {
+      console.log('[auth] checking /server/bovespa-api/api/me ...')
       const res = await fetch('/server/bovespa-api/api/me', {
         credentials: 'include',
         headers: { Accept: 'application/json' },
       })
-      if (res.ok) {
-        const contentType = res.headers.get('content-type') ?? ''
-        if (contentType.includes('application/json')) {
-          const { data } = await res.json()
-          set({ status: 'authenticated', user: data, error: null })
+      console.log('[auth] status:', res.status, '| url:', res.url, '| content-type:', res.headers.get('content-type'))
+      const text = await res.text()
+      console.log('[auth] body:', text.slice(0, 300))
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const json = JSON.parse(text)
+        if (json.data) {
+          set({ status: 'authenticated', user: json.data, error: null })
           return
         }
       }
       set({ status: 'unauthenticated', user: null })
-    } catch {
+    } catch (err) {
+      console.error('[auth] error:', err)
       set({ status: 'unauthenticated', user: null })
     }
   },
