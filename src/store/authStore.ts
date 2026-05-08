@@ -9,9 +9,8 @@ interface AuthState {
   user: AuthUser | null
   error: string | null
   check: () => Promise<void>
-  login: (email: string, password: string) => Promise<void>
-  register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>
-  logout: () => Promise<void>
+  login: () => void
+  logout: () => void
   clearError: () => void
 }
 
@@ -26,11 +25,6 @@ function toAuthUser(catalystUser: {
     email: catalystUser.email_id,
     name: `${catalystUser.first_name} ${catalystUser.last_name}`.trim(),
   }
-}
-
-function extractError(err: unknown): string {
-  const e = err as { errorMessage?: string; message?: string; data?: { message?: string } }
-  return e?.errorMessage ?? e?.data?.message ?? e?.message ?? 'Ocorreu um erro. Tente novamente.'
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -55,43 +49,19 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  login: async (email, password) => {
-    set({ error: null })
-    try {
-      const result = await getCatalystAuth().signIn('email_password', {
-        email_id: email.trim().toLowerCase(),
-        password,
-      })
-      set({ status: 'authenticated', user: toAuthUser(result), error: null })
-    } catch (err) {
-      const msg = extractError(err)
-      set({ error: msg })
-      throw new Error(msg)
+  // Redirects to Catalyst hosted login page (handles both login and signup)
+  login: () => {
+    if (isCatalystReady()) {
+      getCatalystAuth().signIn()
+    } else {
+      window.location.href = '/__catalyst/auth/login'
     }
   },
 
-  register: async (firstName, lastName, email, password) => {
-    set({ error: null })
-    try {
-      const result = await getCatalystAuth().signUp({
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        email_id: email.trim().toLowerCase(),
-        password,
-        platform_type: 'web',
-      })
-      set({ status: 'authenticated', user: toAuthUser(result), error: null })
-    } catch (err) {
-      const msg = extractError(err)
-      set({ error: msg })
-      throw new Error(msg)
-    }
-  },
-
-  logout: async () => {
-    try {
-      await getCatalystAuth().signOut()
-    } finally {
+  logout: () => {
+    if (isCatalystReady()) {
+      getCatalystAuth().signOut('redirect', { redirect_url: window.location.origin })
+    } else {
       set({ status: 'unauthenticated', user: null, error: null })
     }
   },
