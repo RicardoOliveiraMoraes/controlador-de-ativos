@@ -3,9 +3,11 @@ import type { Transaction, WatchlistItem, AuthUser } from '../types'
 
 // Em produção (Catalyst), as funções ficam em /server/{nome-da-function}/
 // O Catalyst injeta os cookies de sessão automaticamente (withCredentials)
+const FUNCTION_BASE = 'https://newppp-766202007.development.catalystserverless.com/server/bovespa-api'
+
 const http = axios.create({
-  baseURL: '/server/bovespa-api',
-  withCredentials: true,   // envia os cookies de sessão do Catalyst
+  baseURL: FUNCTION_BASE,
+  withCredentials: true,
 })
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────

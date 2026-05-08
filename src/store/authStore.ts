@@ -21,7 +21,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   check: async () => {
     try {
       console.log('[auth] checking /server/bovespa-api/api/me ...')
-      const res = await fetch('/server/bovespa-api/api/me', {
+      const res = await fetch('https://newppp-766202007.development.catalystserverless.com/server/bovespa-api/api/me', {
         credentials: 'include',
         headers: { Accept: 'application/json' },
       })
