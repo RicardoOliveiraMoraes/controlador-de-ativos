@@ -1,6 +1,5 @@
-import { TrendingUp, AlertCircle } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
-import { isCatalystReady } from '../lib/catalyst'
 
 export function Login() {
   const login = useAuthStore((s) => s.login)
@@ -17,25 +16,13 @@ export function Login() {
         </div>
 
         <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-8 flex flex-col items-center gap-6">
-          <div className="text-center">
-            <p className="text-slate-300 text-sm">
-              Faça login ou crie sua conta para acessar sua carteira e watchlist sincronizados.
-            </p>
-          </div>
-
-          {!isCatalystReady() && (
-            <div className="flex items-start gap-2 px-4 py-3 bg-amber-900/30 border border-amber-700/50 rounded-xl w-full">
-              <AlertCircle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-300">
-                Autenticação disponível apenas quando o app está deployado no Zoho Catalyst.
-              </p>
-            </div>
-          )}
+          <p className="text-slate-300 text-sm text-center">
+            Faça login ou crie sua conta para acessar sua carteira e watchlist sincronizados.
+          </p>
 
           <button
             onClick={login}
-            disabled={!isCatalystReady()}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl transition-colors"
           >
             Entrar / Criar conta
           </button>
