@@ -1,8 +1,6 @@
 import { create } from 'zustand'
 import type { AuthUser } from '../types'
-import { fetchCurrentUser, signIn as apiSignIn, signUp as apiSignUp } from '../services/api'
-
-const TOKEN_KEY = 'bovespa-token'
+import { getCatalystAuth, isCatalystReady } from '../lib/catalyst'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -12,8 +10,27 @@ interface AuthState {
   error: string | null
   check: () => Promise<void>
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
-  logout: () => void
+  register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>
+  logout: () => Promise<void>
+  clearError: () => void
+}
+
+function toAuthUser(catalystUser: {
+  user_id: string
+  email_id: string
+  first_name: string
+  last_name: string
+}): AuthUser {
+  return {
+    id: String(catalystUser.user_id),
+    email: catalystUser.email_id,
+    name: `${catalystUser.first_name} ${catalystUser.last_name}`.trim(),
+  }
+}
+
+function extractError(err: unknown): string {
+  const e = err as { errorMessage?: string; message?: string; data?: { message?: string } }
+  return e?.errorMessage ?? e?.data?.message ?? e?.message ?? 'Ocorreu um erro. Tente novamente.'
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -21,18 +38,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   error: null,
 
-  // Valida o token salvo no localStorage ao abrir o app
   check: async () => {
-    const token = localStorage.getItem(TOKEN_KEY)
-    if (!token) {
+    if (!isCatalystReady()) {
       set({ status: 'unauthenticated' })
       return
     }
     try {
-      const user = await fetchCurrentUser()
-      set({ status: 'authenticated', user, error: null })
+      const result = await getCatalystAuth().isUserAuthenticated()
+      if (result) {
+        set({ status: 'authenticated', user: toAuthUser(result), error: null })
+      } else {
+        set({ status: 'unauthenticated', user: null })
+      }
     } catch {
-      localStorage.removeItem(TOKEN_KEY)
       set({ status: 'unauthenticated', user: null })
     }
   },
@@ -40,35 +58,43 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email, password) => {
     set({ error: null })
     try {
-      const { token, user } = await apiSignIn(email, password)
-      localStorage.setItem(TOKEN_KEY, token)
-      set({ status: 'authenticated', user, error: null })
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao fazer login. Tente novamente.'
+      const result = await getCatalystAuth().signIn('email_password', {
+        email_id: email.trim().toLowerCase(),
+        password,
+      })
+      set({ status: 'authenticated', user: toAuthUser(result), error: null })
+    } catch (err) {
+      const msg = extractError(err)
       set({ error: msg })
       throw new Error(msg)
     }
   },
 
-  register: async (name, email, password) => {
+  register: async (firstName, lastName, email, password) => {
     set({ error: null })
     try {
-      const { token, user } = await apiSignUp(name, email, password)
-      localStorage.setItem(TOKEN_KEY, token)
-      set({ status: 'authenticated', user, error: null })
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao criar conta. Tente novamente.'
+      const result = await getCatalystAuth().signUp({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email_id: email.trim().toLowerCase(),
+        password,
+        platform_type: 'web',
+      })
+      set({ status: 'authenticated', user: toAuthUser(result), error: null })
+    } catch (err) {
+      const msg = extractError(err)
       set({ error: msg })
       throw new Error(msg)
     }
   },
 
-  logout: () => {
-    localStorage.removeItem(TOKEN_KEY)
-    set({ status: 'unauthenticated', user: null, error: null })
+  logout: async () => {
+    try {
+      await getCatalystAuth().signOut()
+    } finally {
+      set({ status: 'unauthenticated', user: null, error: null })
+    }
   },
+
+  clearError: () => set({ error: null }),
 }))

@@ -16,7 +16,7 @@ import { TrendingUp } from 'lucide-react'
 
 export default function App() {
   const theme = useSettingsStore((s) => s.theme)
-  const { status, check } = useAuthStore()
+  const { status, check, logout: _logout } = useAuthStore()
   const syncPortfolio = usePortfolioStore((s) => s.syncFromApi)
   const syncWatchlist = useWatchlistStore((s) => s.syncFromApi)
 

@@ -15,6 +15,8 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Catalyst Web SDK: necessário para autenticação em produção -->
+    <script src="/__catalyst/init.js" onerror="console.warn('[Bovespa] Catalyst SDK indisponível — app deve ser deployado no Catalyst.')"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

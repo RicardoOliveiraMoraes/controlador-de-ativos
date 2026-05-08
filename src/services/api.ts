@@ -1,34 +1,14 @@
 import axios from 'axios'
 import type { Transaction, WatchlistItem, AuthUser } from '../types'
 
-const BASE = '/server/bovespa-api'
-
-const http = axios.create({ baseURL: BASE })
-
-// Injeta o JWT em todas as requisições automaticamente
-http.interceptors.request.use((config) => {
-  const token = localStorage.getItem('bovespa-token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
+// Em produção (Catalyst), as funções ficam em /server/{nome-da-function}/
+// O Catalyst injeta os cookies de sessão automaticamente (withCredentials)
+const http = axios.create({
+  baseURL: '/server/bovespa-api',
+  withCredentials: true,   // envia os cookies de sessão do Catalyst
 })
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
-
-interface AuthResponse {
-  success: boolean
-  token: string
-  user: AuthUser
-}
-
-export async function signUp(name: string, email: string, password: string): Promise<AuthResponse> {
-  const { data } = await http.post<AuthResponse>('/api/auth/signup', { name, email, password })
-  return data
-}
-
-export async function signIn(email: string, password: string): Promise<AuthResponse> {
-  const { data } = await http.post<AuthResponse>('/api/auth/signin', { email, password })
-  return data
-}
 
 export async function fetchCurrentUser(): Promise<AuthUser> {
   const { data } = await http.get<{ success: boolean; data: AuthUser }>('/api/me')

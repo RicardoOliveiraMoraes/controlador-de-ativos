@@ -16,7 +16,8 @@ const nav = [
 
 export function Header() {
   const { theme, toggleTheme } = useSettingsStore()
-  const { user, logout } = useAuthStore()
+  const user = useAuthStore((s) => s.user)
+  const logout = useAuthStore((s) => s.logout)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
