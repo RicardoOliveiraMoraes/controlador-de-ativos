@@ -78,3 +78,41 @@ export interface Settings {
   currency: 'BRL'
   theme: 'light' | 'dark'
 }
+
+export interface CompanyListItem {
+  ticker: string
+  name: string
+  sector: string
+  logo?: string
+  price?: number
+  change?: number
+  marketCap?: number
+}
+
+export interface CompanyFundamentals {
+  ticker: string
+  name: string
+  sector?: string
+  // Valuation
+  priceEarnings?: number
+  priceToBook?: number
+  evEbitda?: number
+  dividendYield?: number
+  earningsPerShare?: number
+  // Rentabilidade
+  roe?: number
+  roa?: number
+  netMargin?: number
+  grossMargin?: number
+  // Endividamento
+  debtToEquity?: number
+  netDebtEbitda?: number
+  currentRatio?: number
+  // Financeiro
+  revenue?: number
+  netIncome?: number
+  ebitda?: number
+  totalAssets?: number
+  totalEquity?: number
+  marketCap?: number
+}
