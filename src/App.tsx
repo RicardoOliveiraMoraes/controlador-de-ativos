@@ -7,6 +7,7 @@ import { Portfolio } from './pages/Portfolio'
 import { Transactions } from './pages/Transactions'
 import { Watchlist } from './pages/Watchlist'
 import { Settings } from './pages/Settings'
+import { Reports } from './pages/Reports'
 import { Login } from './pages/Login'
 import { useSettingsStore } from './store/settingsStore'
 import { useAuthStore } from './store/authStore'
@@ -62,6 +63,7 @@ export default function App() {
               <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/watchlist" element={<Watchlist />} />
+              <Route path="/relatorios" element={<Reports />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </div>

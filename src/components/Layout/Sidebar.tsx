@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Briefcase, ArrowLeftRight, Star, Settings, TrendingUp } from 'lucide-react'
+import { LayoutDashboard, Briefcase, ArrowLeftRight, Star, Settings, TrendingUp, FileText } from 'lucide-react'
 import { clsx } from 'clsx'
 
 const nav = [
@@ -7,6 +7,7 @@ const nav = [
   { to: '/portfolio', label: 'Carteira', icon: Briefcase },
   { to: '/transactions', label: 'Transações', icon: ArrowLeftRight },
   { to: '/watchlist', label: 'Watchlist', icon: Star },
+  { to: '/relatorios', label: 'Relatórios B3', icon: FileText },
   { to: '/settings', label: 'Configurações', icon: Settings },
 ]
 
